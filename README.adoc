@@ -1,0 +1,10 @@
+# redino
+
+redino program.
+
+## Installation
+
+```sh
+pip install redino
+```
+
