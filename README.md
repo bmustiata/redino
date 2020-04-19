@@ -1,1 +1,1 @@
-GENERATE WITH bin/update-readme.py
+Makes life easier keeping Python data in Redis.
