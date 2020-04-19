@@ -2,3 +2,4 @@ arg0: redino
 redino: true
 templates:
 - py3/lib
+- gbs/init
