@@ -14,14 +14,14 @@ def transactional(f: Callable[..., T]) -> Callable[..., T]:
     def wrapper(*args, **kw) -> T:
         r: redis.StrictRedis = args[0]
 
-        tx = r.pipeline()
+        r.execute_command("MULTI")
         try:
             result = f(*args, **kw)
-            tx.execute()
+            r.execute_command("EXEC")
             return result
         except Exception as e:
-            tx.reset()
-            LOG.error("DISCARD redis changes, due to {}", e)
+            r.execute_command("DISCARD")
+            LOG.error("DISCARD redis changes, due to {}", str(e))
 
     return wrapper
 
@@ -33,15 +33,3 @@ def redis_connect(f: Callable[..., T]) -> Callable[..., T]:
         return f(r, *args, **kw)
 
     return wrapper
-
-
-def model(namespace: str = "") -> Callable[..., Callable[..., T]]:
-    def wrapper_builder(f: Callable[..., T]) -> Callable[..., T]:
-        @functools.wraps(f)
-        def wrapper(*args, **kw) -> T:
-            return f(*args, **kw)
-
-        return wrapper
-
-    return wrapper_builder
-
