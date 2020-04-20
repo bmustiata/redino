@@ -6,7 +6,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 _redis_instance: Optional[redis.client.Redis] = None
 
 

@@ -8,6 +8,7 @@ class TestRedisReadWrite(unittest.TestCase):
     """
     Test the model if it can create entries in redis
     """
+
     def test_regular_writing(self):
         @redis_connect
         @transactional
@@ -42,5 +43,5 @@ class TestRedisReadWrite(unittest.TestCase):
         read_values()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

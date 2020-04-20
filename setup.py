@@ -16,8 +16,5 @@ setup(
     license="BSD",
     install_requires=[],
     packages=packages,
-    package_data={
-        "": ["*.txt", "*.rst"],
-        "redino": ["py.typed"],
-    },
+    package_data={"": ["*.txt", "*.rst"], "redino": ["py.typed"],},
 )
