@@ -32,7 +32,8 @@ def transactional(f: Callable[..., T]) -> Callable[..., T]:
             return result
         except Exception as e:
             r.execute_command("DISCARD")
-            LOG.error("DISCARD redis changes, due to {}", str(e))
+            LOG.error("DISCARD redis changes, due to {err}",
+                      err=str(e))
             raise e
 
     return wrapper
