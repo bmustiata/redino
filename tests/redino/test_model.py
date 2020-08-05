@@ -1,4 +1,5 @@
 import unittest
+from typing import Dict, Set, List
 
 import redis
 
@@ -6,11 +7,19 @@ import redino
 
 
 class Item(redino.Entity):
-    def __init__(self,
-                 *,
-                 redis: redis.client.Redis,
-                 **kw) -> None:
-        super(Item, self).__init__(redis=redis, **kw)
+    name: str
+    count: int
+    d: Dict[int, int]
+    s: Set[str]
+    l: List[int]
+
+    attr = {
+        "name": str,
+        "count": int,
+        "d": (dict, int, int),
+        "s": (set, str),
+        "l": (list, int),
+    }
 
 
 class TestModel(unittest.TestCase):
@@ -29,14 +38,19 @@ class TestModel(unittest.TestCase):
         @redino.connect
         @redino.transactional
         def set_values(r: redis.client.Redis):
-            item = Item(redis=r)
+            item = Item(redis=r).persist()
             item.name = "wut"
+            item.count = 5
 
         @redino.connect
         def read_values(r: redis.client.Redis):
-            items = redino.Entity.fetch_all(redis=r, type=Item)
+            items: List[Item] = redino.Entity.fetch_all(redis=r, type=Item)
             self.assertEqual(1, len(items))
+
             self.assertEqual("wut", items[0].name)
+            self.assertTrue(isinstance(items[0].name, str))
+            self.assertEqual(5, items[0].count)
+            self.assertTrue(isinstance(items[0].count, int))
 
         clear_values()
         set_values()
