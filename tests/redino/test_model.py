@@ -1,46 +1,47 @@
 import unittest
 
 import redis
-from redino import transactional, redis_connect
+
+import redino
 
 
-class TestRedisReadWrite(unittest.TestCase):
+class Item(redino.Entity):
+    def __init__(self,
+                 *,
+                 redis: redis.client.Redis,
+                 **kw) -> None:
+        super(Item, self).__init__(redis=redis, **kw)
+
+
+class TestModel(unittest.TestCase):
     """
-    Test the model if it can create entries in redis
+    Tests if creating model works
     """
-    def test_regular_writing(self):
-        @redis_connect
-        @transactional
-        def set_values(r: redis.Redis):
-            r.hset("a", "key", "3")
-            r.hset("b", "key", "3")
+    def test_model(self):
+        """
+        Tests a model creation
+        """
+        @redino.connect
+        def clear_values(r: redis.client.Redis):
+            for it in redino.Entity.fetch_all(redis=r, type=Item):
+                it.delete()
 
-        @redis_connect
-        def read_values(r: redis.Redis):
-            self.assertEqual("3", r.hget("a", "key").decode("utf-8"))
-            self.assertEqual("3", r.hget("b", "key").decode("utf-8"))
+        @redino.connect
+        @redino.transactional
+        def set_values(r: redis.client.Redis):
+            item = Item(redis=r)
+            item.name = "wut"
 
+        @redino.connect
+        def read_values(r: redis.client.Redis):
+            items = redino.Entity.fetch_all(redis=r, type=Item)
+            self.assertEqual(1, len(items))
+            self.assertEqual("wut", items[0].name)
+
+        clear_values()
         set_values()
         read_values()
 
-    def test_exception_rolls_back(self):
-        @redis_connect
-        @transactional
-        def set_values(r: redis.Redis):
-            r.hset("ROLL", "key", "3")
-            raise Exception("ded")
 
-        @redis_connect
-        def read_values(r: redis.Redis):
-            self.assertIsNone(r.hget("ROLL", "key"))
-
-        try:
-            set_values()
-        except Exception:
-            pass
-
-        read_values()
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
