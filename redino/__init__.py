@@ -5,12 +5,13 @@ from typing import Callable, TypeVar, Optional
 
 import redis.client
 
-from redino.entity import Entity
+from redino._redis_instance import _redis_thread_instance, redis_instance
+from redino.redino_entity import Entity
 
 LOG = logging.getLogger(__name__)
 
 T = TypeVar("T")
-_redis_instance: Optional[redis.client.Redis] = None
+_redis_pool_instance: Optional[redis.client.Redis] = None
 
 
 class Operation(Enum):
@@ -20,12 +21,12 @@ class Operation(Enum):
 
 
 def _redis_pool() -> redis.client.Redis:
-    global _redis_instance
+    global _redis_pool_instance
 
-    if not _redis_instance:
-        _redis_instance = redis.client.Redis()
+    if not _redis_pool_instance:
+        _redis_pool_instance = redis.client.Redis()
 
-    return _redis_instance
+    return _redis_pool_instance
 
 
 def watch(entity_class) -> Callable[..., Callable[..., T]]:
@@ -42,7 +43,7 @@ def watch(entity_class) -> Callable[..., Callable[..., T]]:
 def transactional(f: Callable[..., T]) -> Callable[..., T]:
     @functools.wraps(f)
     def wrapper(*args, **kw) -> T:
-        r: redis.client.Redis = args[0]
+        r = redis_instance()
 
         r.execute_command("MULTI")
         try:
@@ -63,6 +64,10 @@ def connect(f: Callable[..., T]) -> Callable[..., T]:
     @functools.wraps(f)
     def wrapper(*args, **kw) -> T:
         with _redis_pool().client() as redis_client:  # type: ignore
-            return f(redis_client, *args, **kw)
+            try:
+                _redis_thread_instance.instance = redis_client
+                return f(*args, **kw)
+            finally:
+                _redis_thread_instance.instance = None
 
     return wrapper

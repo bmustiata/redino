@@ -31,20 +31,20 @@ class TestModel(unittest.TestCase):
         Tests a model creation
         """
         @redino.connect
-        def clear_values(r: redis.client.Redis):
-            for it in redino.Entity.fetch_all(redis=r, type=Item):
+        def clear_values():
+            for it in redino.Entity.fetch_all(type=Item):
                 it.delete()
 
         @redino.connect
         @redino.transactional
-        def set_values(r: redis.client.Redis):
-            item = Item(redis=r).persist()
+        def set_values():
+            item = Item().persist()
             item.name = "wut"
             item.count = 5
 
         @redino.connect
-        def read_values(r: redis.client.Redis):
-            items: List[Item] = redino.Entity.fetch_all(redis=r, type=Item)
+        def read_values():
+            items: List[Item] = redino.Entity.fetch_all(type=Item)
             self.assertEqual(1, len(items))
 
             self.assertEqual("wut", items[0].name)
