@@ -77,11 +77,16 @@ class RedinoList(RedinoItem):
         redis_instance().execute_command("del", self._rd_self_id)
 
     def index(self, item: _T, *args: Any) -> int:
-        return redis_instance().execute_command(
+        result = redis_instance().execute_command(
             "lpos",
             self._rd_self_id,
             self._rd_converter.data_to_bytes(item),
         )
+
+        if result is None:
+            return -1
+
+        return result
 
     def extend(self, other: Iterable[_T]) -> None:
         for item in other:

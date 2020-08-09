@@ -21,7 +21,7 @@ class DataConverter:
         if self._type is int:
             return data
 
-        if isinstance(data, redino.redino_entity.Entity):
+        if isinstance(data, redino.redino_entity.RedinoItem):
             return data
 
         if self._type.__origin__ is list and isinstance(data, list):

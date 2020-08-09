@@ -64,8 +64,8 @@ class Entity(RedinoItem):
         # FIXME: cache converters
         converter = DataConverter(_type=definition)
 
-        # FIXME: try to delete previous collections on reassign if they
-        # exist
+        # NOTE: deletion is not handled here since we cannot
+        # guarantee usage from other objects.
         native = converter.from_data(value)
 
         redis_instance().hset(
