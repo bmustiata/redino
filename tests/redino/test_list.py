@@ -55,6 +55,37 @@ class TestList(unittest.TestCase):
         finally:
             l.delete()
 
+    @redino.connect
+    def test_iteration(self):
+        l = self.create_test_list()
+        try:
+            for f in l:
+                print(f)
+        finally:
+            l.delete()
+
+    @redino.connect
+    def test_left_right_push(self):
+        l = self.create_test_list()
+        try:
+            l.clear()
+            l.right_push("b")
+            l.right_push("c")
+            l.left_push("a")
+
+            self.assertEqual(3, len(l))
+            self.assertEqual("a", l[0])
+            self.assertEqual("b", l[1])
+            self.assertEqual("c", l[2])
+
+            self.assertEqual("a", l.left_pop())
+            self.assertEqual("c", l.right_pop())
+
+            self.assertEqual(1, len(l))
+            self.assertEqual("b", l[0])
+        finally:
+            l.delete()
+
     def create_test_list(self):
         l = redino.RedinoList(
             _id="_testlist",

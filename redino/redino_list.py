@@ -9,6 +9,11 @@ _S = TypeVar("_S")
 
 
 class RedinoList(RedinoItem):
+    """
+    This behaves a lot like a linked list deque, so using indexed
+    access it's a terrible idea. Has blocking support for fetching
+    items.
+    """
     def __init__(self,
                  _type: Any,
                  _id: Optional[str] = None) -> None:
@@ -62,6 +67,38 @@ class RedinoList(RedinoItem):
 
     def pop(self, i: int = ...) -> _T:
         data = redis_instance().execute_command("lpop", self._rd_self_id)
+        return self._rd_converter.from_bytes(data)
+
+    def left_push(self: _S, item: _T) -> None:
+        data = self._rd_converter.data_to_bytes(item)
+        redis_instance().execute_command("lpush", self._rd_self_id, data)
+
+    def right_push(self: _S, item: _T) -> None:
+        data = self._rd_converter.data_to_bytes(item)
+        redis_instance().execute_command("rpush", self._rd_self_id, data)
+
+    def left_pop(self: _S) -> _T:
+        data = redis_instance().execute_command("lpop", self._rd_self_id)
+        return self._rd_converter.from_bytes(data)
+
+    def right_pop(self: _S) -> _T:
+        data = redis_instance().execute_command("rpop", self._rd_self_id)
+        return self._rd_converter.from_bytes(data)
+
+    def blocking_left_push(self: _S, item: _T) -> None:
+        data = self._rd_converter.data_to_bytes(item)
+        redis_instance().execute_command("blpush", self._rd_self_id, data)
+
+    def blocking_right_push(self: _S, item: _T) -> None:
+        data = self._rd_converter.data_to_bytes(item)
+        redis_instance().execute_command("brpush", self._rd_self_id, data)
+
+    def blocking_left_pop(self: _S) -> _T:
+        data = redis_instance().execute_command("blpop", self._rd_self_id)
+        return self._rd_converter.from_bytes(data)
+
+    def blocking_right_pop(self: _S) -> _T:
+        data = redis_instance().execute_command("brpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
     def remove(self, item: _T) -> None:
