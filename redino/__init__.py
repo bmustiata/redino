@@ -6,7 +6,6 @@ from typing import Callable, TypeVar, Optional
 import redis.client
 
 from redino._redis_instance import _redis_thread_instance, redis_instance
-from redino.redino_entity import Entity
 
 LOG = logging.getLogger(__name__)
 
@@ -71,3 +70,7 @@ def connect(f: Callable[..., T]) -> Callable[..., T]:
                 _redis_thread_instance.instance = None
 
     return wrapper
+
+
+from redino.redino_entity import Entity
+from redino.redino_list import RedinoList

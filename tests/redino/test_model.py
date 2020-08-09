@@ -1,8 +1,6 @@
 import unittest
 from typing import Dict, Set, List
 
-import redis
-
 import redino
 
 
@@ -16,9 +14,9 @@ class Item(redino.Entity):
     attr = {
         "name": str,
         "count": int,
-        "d": (dict, int, int),
-        "s": (set, str),
-        "l": (list, int),
+        "d": Dict[int, int],
+        "s": Set[str],
+        "l": List[int],
     }
 
 
