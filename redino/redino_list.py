@@ -1,4 +1,4 @@
-from typing import TypeVar, Iterable, Any, Optional
+from typing import TypeVar, Iterable, Any, Optional, Iterator
 
 from redino._redis_instance import redis_instance
 from redino.data_converter import DataConverter
@@ -23,7 +23,8 @@ class RedinoList(RedinoItem):
         self._rd_converter = DataConverter(_type=_type.__args__[0])
 
     def persist(self: _S) -> _S:
-        pass  # there's nothing to persist when created
+        # there's nothing to persist when created
+        return self
 
     def delete(self) -> None:
         self.clear()
@@ -32,7 +33,8 @@ class RedinoList(RedinoItem):
         return self.index(item) >= 0
 
     def __len__(self) -> int:
-        return redis_instance().execute_command("llen", self._rd_self_id)
+        result = redis_instance().execute_command("llen", self._rd_self_id)
+        return int(result)
 
     def __setitem__(self, index: int, data: _T) -> None:
         redis_instance().execute_command(
@@ -57,6 +59,10 @@ class RedinoList(RedinoItem):
     def __iadd__(self: '', other: _T) -> _S:
         self.append(other)
         return self
+
+    def __iter__(self):
+        return ListIterator(self)
+
 
     def append(self, other: _T):
         redis_instance().execute_command(
@@ -128,3 +134,19 @@ class RedinoList(RedinoItem):
     def extend(self, other: Iterable[_T]) -> None:
         for item in other:
             self.append(item)
+
+
+class ListIterator(Iterator[_T]):
+    def __init__(self: _S, l: RedinoList) -> None:
+        self._list = l
+        self._len = len(l)
+        self._index = 0
+
+    def __next__(self) -> _T:
+        if self._index < self._len:
+            result = self._list[self._index]
+            self._index += 1
+
+            return result
+
+        raise StopIteration

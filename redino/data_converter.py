@@ -6,7 +6,7 @@ import redino.redino_entity
 import redino.redino_item
 
 RedisBytes = Union[bytes, int, str]
-RedinoNative = Union[redino.redino_item.RedinoItem, bytes, int, str]
+RedinoNative = Union[redino.redino_item.RedinoItem, bytes, int, str, None]
 
 
 class DataConverter:
@@ -33,6 +33,9 @@ class DataConverter:
         raise Exception(f"Unsupported type: {self._type} for data {type(data)}")
 
     def from_bytes(self, data: bytes) -> RedinoNative:
+        if data is None:
+            return None
+
         if self._type is str:
             return data.decode('utf-8')
 
