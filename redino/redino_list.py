@@ -60,7 +60,7 @@ class RedinoList(RedinoItem):
         self.append(other)
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[_T]:
         return ListIterator(self)
 
     def append(self, other: _T):

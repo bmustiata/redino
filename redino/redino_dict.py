@@ -1,7 +1,7 @@
-from typing import TypeVar, Any, Optional, Dict
+from typing import TypeVar, Any, Optional, Dict, Tuple, Iterable
 
-import redino.redino_item
 import redino.data_converter
+import redino.redino_item
 from redino import redis_instance
 
 _S = TypeVar("_S")
@@ -20,7 +20,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
         self._rd_converter_value = redino.data_converter.DataConverter(_type=_type.__args__[1])
 
     def rd_persist(self: _S) -> _S:
-        pass
+        return self
 
     def rd_delete(self) -> None:
         self.clear()
@@ -28,16 +28,17 @@ class RedinoDict(redino.redino_item.RedinoItem):
     def clear(self):
         redis_instance().execute_command("del", self._rd_self_id)
 
-    @staticmethod  # known case
-    def fromkeys(*args, **kwargs):  # real signature unknown
-        """ Create a new dictionary with keys from iterable and values set to value. """
-        pass
+    def get(self, key: _K) -> _V:
+        data = redis_instance().execute_command(
+            "hget",
+            self._rd_self_id,
+            self._rd_converter_key.data_to_bytes(key),
+        )
 
-    def get(self, *args, **kwargs):
-        pass
+        return self._rd_converter_value.from_bytes(data)
 
-    def items(self):
-        pass
+    def items(self) -> Iterable[Tuple[_K, _V]]:
+        return RedisIterator(self)
 
     def keys(self):
         pass
@@ -59,33 +60,90 @@ class RedinoDict(redino.redino_item.RedinoItem):
     def setdefault(self, *args, **kwargs):  # real signature unknown
         pass
 
-    def update(self, E=None, **F):  # known special case of dict.update
-        pass
+    def update(self, m: Dict[_K, _V]):
+        for k, v in m.items():
+            self[k] = v
 
-    def values(self):  # real signature unknown; restored from __doc__
+    def values(self):
         pass
 
     def __contains__(self, *args, **kwargs):
         pass
 
-    def __delitem__(self, *args, **kwargs):
-        pass
+    def __delitem__(self, key: _K):
+        redis_instance().execute_command(
+            "hdel",
+            self._rd_self_id,
+            self._rd_converter_key.data_to_bytes(key),
+        )
 
-    def __eq__(self, *args, **kwargs):  # real signature unknown
-        pass
+    def __getitem__(self, key: _K) -> Optional[_V]:
+        data = redis_instance().execute_command(
+            "hget",
+            self._rd_self_id,
+            self._rd_converter_key.data_to_bytes(key),
+        )
 
-    def __getattribute__(self, *args, **kwargs):  # real signature unknown
-        pass
+        return self._rd_converter_value.from_bytes(data)
 
-    def __getitem__(self, y):  # real signature unknown; restored from __doc__
-        pass
+    def __iter__(self):
+        return self.keys()
 
-    def __iter__(self, *args, **kwargs):  # real signature unknown
-        pass
+    def __len__(self) -> int:
+        return int(redis_instance().execute_command(
+            "hget",
+            self._rd_self_id,
+        ))
 
-    def __len__(self, *args, **kwargs):  # real signature unknown
-        pass
+    def __setitem__(self, key: _K, value: _V):
+        redis_instance().execute_command(
+            "hset",
+            self._rd_self_id,
+            self._rd_converter_key.data_to_bytes(key),
+            self._rd_converter_value.data_to_bytes(value),
+        )
 
-    def __setitem__(self, *args, **kwargs):  # real signature unknown
-        """ Set self[key] to value. """
-        pass
+
+def convert_data(d: RedinoDict,
+                 data: Tuple[Any, Any]) -> Tuple[_K, _V]:
+    return (
+        d._rd_converter_key.from_bytes(data[0]),
+        d._rd_converter_value.from_bytes(data[1]),
+    )
+
+
+class RedisIterator:
+    def __init__(self,
+                 d: RedinoDict) -> None:
+        self._d = d
+        self._current_index = -1
+
+        self._read_redis_cursor()
+
+    def __next__(self) -> Tuple[_K, _V]:
+        try:
+            return convert_data(self._d, self._cursor.__next__())
+        except StopIteration:
+            self._read_redis_cursor()
+            return convert_data(self._d, self._cursor.__next__())
+
+    def __iter__(self):
+        return self
+
+    def _read_redis_cursor(self):
+        # if the next index is 0, the redis scan is complete
+        if self._current_index == 0:
+            raise StopIteration()
+
+        # this is why we mark the first index as -1 to start the scan
+        # so we don't confuse it with completion
+        if self._current_index == -1:
+            self._current_index = 0
+
+        redis_cursor = redis_instance().hscan(
+            self._d._rd_self_id,
+            self._current_index,
+        )
+
+        self._current_index = redis_cursor[0]
+        self._cursor = redis_cursor[1].items().__iter__()
