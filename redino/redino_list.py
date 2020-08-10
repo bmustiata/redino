@@ -22,11 +22,11 @@ class RedinoList(RedinoItem):
         # FIXME: use a converter cache for the types
         self._rd_converter = DataConverter(_type=_type.__args__[0])
 
-    def persist(self: _S) -> _S:
+    def rd_persist(self: _S) -> _S:
         # there's nothing to persist when created
         return self
 
-    def delete(self) -> None:
+    def rd_delete(self) -> None:
         self.clear()
 
     def __contains__(self, item: object) -> bool:
@@ -62,7 +62,6 @@ class RedinoList(RedinoItem):
 
     def __iter__(self):
         return ListIterator(self)
-
 
     def append(self, other: _T):
         redis_instance().execute_command(

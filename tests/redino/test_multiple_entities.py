@@ -34,7 +34,7 @@ File.attr = {
 
 
 def create_folder(name: str, _id: Optional[str] = None) -> Folder:
-    result = Folder(_id=_id).persist()
+    result = Folder(_id=_id).rd_persist()
     result.name = name
 
     return result

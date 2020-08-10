@@ -31,12 +31,12 @@ class TestModel(unittest.TestCase):
         @redino.connect
         def clear_values():
             for it in redino.Entity.fetch_all(type=Item):
-                it.delete()
+                it.rd_delete()
 
         @redino.connect
         @redino.transactional
         def set_values():
-            item = Item().persist()
+            item = Item().rd_persist()
             item.name = "wut"
             item.count = 5
 

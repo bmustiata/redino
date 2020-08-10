@@ -25,9 +25,9 @@ class RedinoItem(metaclass=abc.ABCMeta):
             self._rd_self_id = f"{class_name(self)}:{str(uuid.uuid4())}"
 
     @abc.abstractmethod
-    def persist(self: _S) -> _S:
+    def rd_persist(self: _S) -> _S:
         pass
 
     @abc.abstractmethod
-    def delete(self: _S) -> None:
+    def rd_delete(self: _S) -> None:
         pass

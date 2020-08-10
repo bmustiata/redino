@@ -12,7 +12,7 @@ class TestList(unittest.TestCase):
         try:
             self.assertEqual(3, len(l))
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_list_index(self):
@@ -22,7 +22,7 @@ class TestList(unittest.TestCase):
             self.assertEqual("y", l[1])
             self.assertEqual("z", l[2])
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_remove_by_index(self):
@@ -34,7 +34,7 @@ class TestList(unittest.TestCase):
             self.assertEqual("x", l[0])
             self.assertEqual("z", l[1])
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_contains(self):
@@ -43,7 +43,7 @@ class TestList(unittest.TestCase):
             self.assertTrue("y" in l)
             self.assertTrue("b" not in l)
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_clear(self):
@@ -53,7 +53,7 @@ class TestList(unittest.TestCase):
             l.clear()
             self.assertEqual(0, len(l))
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_iteration(self):
@@ -62,7 +62,7 @@ class TestList(unittest.TestCase):
             for f in l:
                 print(f)
         finally:
-            l.delete()
+            l.rd_delete()
 
     @redino.connect
     def test_left_right_push(self):
@@ -84,14 +84,16 @@ class TestList(unittest.TestCase):
             self.assertEqual(1, len(l))
             self.assertEqual("b", l[0])
         finally:
-            l.delete()
+            l.rd_delete()
 
     def create_test_list(self):
         l = redino.RedinoList(
             _id="_testlist",
             _type=List[str],
-        )
+        ).rd_persist()
+
         l.clear()
+
         l.append("x")
         l.append("y")
         l += "z"

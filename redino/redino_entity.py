@@ -22,11 +22,11 @@ class Entity(RedinoItem):
         super(Entity, self).__init__(_id=_id)
         self._rd_cache = dict()
 
-    def persist(self: _S) -> _S:
+    def rd_persist(self: _S) -> _S:
         redis_instance().hset(class_name(self), self._rd_self_id, "1")
         return self
 
-    def delete(self) -> None:
+    def rd_delete(self) -> None:
         # FIXME: iterate over the `attr` and delete them, if the
         # items are being owned
         redis_instance().hdel(class_name(self), self._rd_self_id)
