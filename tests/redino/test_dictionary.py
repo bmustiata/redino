@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from typing import Dict
 
 import redino
@@ -27,6 +28,46 @@ class TestList(unittest.TestCase):
                 index += 1
         finally:
             d.rd_delete()
+
+    def test_large_items(self):
+        created_dict = dict()
+        control_dict = dict()
+
+        @redino.connect
+        def create_large_dict():
+            d = RedinoDict(
+                _id="testdictlarge",
+                _type=Dict[str, str]).rd_persist()
+
+            for i in range(1000):
+                key = str(uuid.uuid4())
+                value = str(uuid.uuid4())
+
+                created_dict[key] = value
+                d[key] = value
+
+        @redino.connect
+        def read_dictionary():
+            d = RedinoDict(
+                _id="testdictlarge",
+                _type=Dict[str, str])
+
+            for k, v in d.items():
+                control_dict[k] = v
+
+        @redino.connect
+        def delete_dict():
+            RedinoDict(
+                _id="testdictlarge",
+                _type=Dict[str, str]).rd_delete()
+
+        try:
+            create_large_dict()
+            read_dictionary()
+
+            self.assertEqual(created_dict, control_dict)
+        finally:
+            delete_dict()
 
     def create_dictionary(self) -> RedinoDict:
         d = RedinoDict(

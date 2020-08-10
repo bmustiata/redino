@@ -38,7 +38,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
         return self._rd_converter_value.from_bytes(data)
 
     def items(self) -> Iterable[Tuple[_K, _V]]:
-        return RedisIterator(self)
+        return RedisDictItems(self)
 
     def keys(self):
         pass
@@ -112,6 +112,15 @@ def convert_data(d: RedinoDict,
     )
 
 
+class RedisDictItems:
+    def __init__(self,
+                 d: RedinoDict) -> None:
+        self._d = d
+
+    def __iter__(self):
+        return RedisIterator(self._d)
+
+
 class RedisIterator:
     def __init__(self,
                  d: RedinoDict) -> None:
@@ -126,9 +135,6 @@ class RedisIterator:
         except StopIteration:
             self._read_redis_cursor()
             return convert_data(self._d, self._cursor.__next__())
-
-    def __iter__(self):
-        return self
 
     def _read_redis_cursor(self):
         # if the next index is 0, the redis scan is complete
