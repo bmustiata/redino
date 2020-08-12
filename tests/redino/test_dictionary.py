@@ -79,6 +79,30 @@ class TestDictionary(unittest.TestCase):
         finally:
             d.rd_delete()
 
+    @redino.connect
+    def test_values_iterator(self):
+        d = TestDictionary.create_dictionary()
+
+        try:
+            self.assertEqual(
+                {"a", "b", "c"},
+                set(d.values())
+            )
+        finally:
+            d.rd_delete()
+
+    @redino.connect
+    def test_keys_iterator(self):
+        d = TestDictionary.create_dictionary()
+
+        try:
+            self.assertEqual(
+                {"x", "y", "z"},
+                set(d.keys())
+            )
+        finally:
+            d.rd_delete()
+
     @staticmethod
     def create_dictionary() -> RedinoDict:
         d = RedinoDict(

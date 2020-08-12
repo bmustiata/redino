@@ -38,10 +38,10 @@ class RedinoDict(redino.redino_item.RedinoItem):
         return self._rd_converter_value.from_bytes(data)
 
     def items(self) -> Iterable[Tuple[_K, _V]]:
-        return RedisDictItems(self)
+        return RedisIterable(self, RedisDictItems)
 
     def keys(self):
-        return RedisDictKeys(self)
+        return RedisIterable(self, RedisDictKeys)
 
     def pop(self, k, d=None):
         """
@@ -65,7 +65,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
             self[k] = v
 
     def values(self):
-        return RedisDictValues(self)
+        return RedisIterable(self, RedisDictValues)
 
     def __contains__(self, key: _K) -> bool:
         return redis_instance().execute_command(
@@ -116,16 +116,18 @@ def convert_data(d: RedinoDict,
     )
 
 
-class RedisDictItems:
+class RedisIterable:
     def __init__(self,
-                 d: RedinoDict) -> None:
+                 d: RedinoDict,
+                 iterator_class: Any) -> None:
         self._d = d
+        self._iterator_class = iterator_class
 
     def __iter__(self):
-        return RedisIterator(self._d)
+        return self._iterator_class(self._d)
 
 
-class RedisIterator:
+class RedisDictItems:
     def __init__(self,
                  d: RedinoDict) -> None:
         self._d = d
@@ -162,7 +164,7 @@ class RedisIterator:
 class RedisDictKeys:
     def __init__(self,
                  d: RedinoDict) -> None:
-        self._iterator = RedisIterator(d)
+        self._iterator = RedisDictItems(d)
 
     def __next__(self) -> _K:
         return self._iterator.__next__()[0]
@@ -171,7 +173,7 @@ class RedisDictKeys:
 class RedisDictValues:
     def __init__(self,
                  d: RedinoDict) -> None:
-        self._iterator = RedisIterator(d)
+        self._iterator = RedisDictItems(d)
 
     def __next__(self) -> _K:
         return self._iterator.__next__()[1]
