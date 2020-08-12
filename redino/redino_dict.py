@@ -3,6 +3,7 @@ from typing import TypeVar, Any, Optional, Dict, Tuple, Iterable
 import redino.data_converter
 import redino.redino_item
 from redino import redis_instance
+from redino._redis_scan import RedisScan, RedisIterable
 
 _S = TypeVar("_S")
 _K = TypeVar("_K")
@@ -95,7 +96,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
 
     def __len__(self) -> int:
         return int(redis_instance().execute_command(
-            "hget",
+            "hlen",
             self._rd_self_id,
         ))
 
@@ -116,50 +117,17 @@ def convert_data(d: RedinoDict,
     )
 
 
-class RedisIterable:
-    def __init__(self,
-                 d: RedinoDict,
-                 iterator_class: Any) -> None:
-        self._d = d
-        self._iterator_class = iterator_class
-
-    def __iter__(self):
-        return self._iterator_class(self._d)
-
-
 class RedisDictItems:
     def __init__(self,
                  d: RedinoDict) -> None:
+        self._scan = RedisScan(d, "hscan")
         self._d = d
-        self._current_index = -1
-
-        self._read_redis_cursor()
 
     def __next__(self) -> Tuple[_K, _V]:
-        try:
-            return convert_data(self._d, self._cursor.__next__())
-        except StopIteration:
-            self._read_redis_cursor()
-            return convert_data(self._d, self._cursor.__next__())
-
-    def _read_redis_cursor(self):
-        # if the next index is 0, the redis scan is complete
-        if self._current_index == 0:
-            raise StopIteration()
-
-        # this is why we mark the first index as -1 to start the scan
-        # so we don't confuse it with completion
-        if self._current_index == -1:
-            self._current_index = 0
-
-        redis_cursor = redis_instance().hscan(
-            self._d._rd_self_id,
-            self._current_index,
+        return convert_data(
+            self._d,
+            self._scan.__next__()
         )
-
-        self._current_index = redis_cursor[0]
-        self._cursor = redis_cursor[1].items().__iter__()
-
 
 class RedisDictKeys:
     def __init__(self,
