@@ -103,6 +103,20 @@ class TestDictionary(unittest.TestCase):
         finally:
             d.rd_delete()
 
+    @redino.connect
+    def test_delete_item(self):
+        d = TestDictionary.create_dictionary()
+
+        del d["y"]
+
+        try:
+            self.assertEqual(
+                {"x", "z"},
+                set(d.keys())
+            )
+        finally:
+            d.rd_delete()
+
     @staticmethod
     def create_dictionary() -> RedinoDict:
         d = RedinoDict(
