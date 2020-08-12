@@ -6,10 +6,10 @@ import redino
 from redino.redino_dict import RedinoDict
 
 
-class TestList(unittest.TestCase):
+class TestDictionary(unittest.TestCase):
     @redino.connect
     def test_dict_items(self):
-        d = self.create_dictionary()
+        d = TestDictionary.create_dictionary()
         try:
             index = 0
             for k, v in d.items():
@@ -69,7 +69,18 @@ class TestList(unittest.TestCase):
         finally:
             delete_dict()
 
-    def create_dictionary(self) -> RedinoDict:
+    @redino.connect
+    def test_contains(self):
+        d = TestDictionary.create_dictionary()
+
+        try:
+            self.assertTrue("x" in d)
+            self.assertTrue("a" not in d)
+        finally:
+            d.rd_delete()
+
+    @staticmethod
+    def create_dictionary() -> RedinoDict:
         d = RedinoDict(
             _id="testdict",
             _type=Dict[str, str]).rd_persist()

@@ -29,7 +29,8 @@ class Entity(RedinoItem):
     def rd_delete(self) -> None:
         # FIXME: iterate over the `attr` and delete them, if the
         # items are being owned
-        redis_instance().hdel(class_name(self), self._rd_self_id)
+        redis_instance().execute_command("hdel", class_name(self), self._rd_self_id)
+        redis_instance().execute_command("del", self._rd_self_id)
 
     def __getattr__(self, key: str) -> Any:
         if key.startswith("_rd_"):
@@ -76,13 +77,13 @@ class Entity(RedinoItem):
         self._rd_cache[key] = native
 
     @staticmethod
-    def fetch_all(type: 'T') -> List['T']:
+    def fetch_all(t: 'T') -> List['t']:
         """
         Fetches all the instances of the given type
         """
         # this gives us the IDs
-        items = redis_instance().hgetall(class_name(type))
-        return [type(_id=id.decode('utf-8')) for id in items]
+        items = redis_instance().hgetall(class_name(t))
+        return [t(_id=id.decode('utf-8')) for id in items]
 
 
 T = TypeVar('T', bound=Entity)

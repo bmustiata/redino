@@ -30,7 +30,16 @@ class TestModel(unittest.TestCase):
         """
         @redino.connect
         def clear_values():
-            for it in redino.Entity.fetch_all(type=Item):
+            for it in redino.Entity.fetch_all(Item):
+                if it.d:
+                    it.d.rd_delete()
+
+                if it.s:
+                    it.s.rd_delete()
+
+                if it.l:
+                    it.l.rd_delete()
+
                 it.rd_delete()
 
         @redino.connect
@@ -42,7 +51,7 @@ class TestModel(unittest.TestCase):
 
         @redino.connect
         def read_values():
-            items: List[Item] = redino.Entity.fetch_all(type=Item)
+            items: List[Item] = redino.Entity.fetch_all(Item)
             self.assertEqual(1, len(items))
 
             self.assertEqual("wut", items[0].name)
@@ -50,9 +59,12 @@ class TestModel(unittest.TestCase):
             self.assertEqual(5, items[0].count)
             self.assertTrue(isinstance(items[0].count, int))
 
-        clear_values()
-        set_values()
-        read_values()
+        try:
+            clear_values()
+            set_values()
+            read_values()
+        finally:
+            clear_values()
 
 
 if __name__ == '__main__':

@@ -41,9 +41,9 @@ class RedinoDict(redino.redino_item.RedinoItem):
         return RedisDictItems(self)
 
     def keys(self):
-        pass
+        return RedisDictKeys(self)
 
-    def pop(self, k, d=None):  # real signature unknown; restored from __doc__
+    def pop(self, k, d=None):
         """
         D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
         If key is not found, d is returned if given, otherwise KeyError is raised
@@ -65,10 +65,14 @@ class RedinoDict(redino.redino_item.RedinoItem):
             self[k] = v
 
     def values(self):
-        pass
+        return RedisDictValues(self)
 
-    def __contains__(self, *args, **kwargs):
-        pass
+    def __contains__(self, key: _K) -> bool:
+        return redis_instance().execute_command(
+            "hexists",
+            self._rd_self_id,
+            self._rd_converter_key.data_to_bytes(key)
+        )
 
     def __delitem__(self, key: _K):
         redis_instance().execute_command(
@@ -153,3 +157,21 @@ class RedisIterator:
 
         self._current_index = redis_cursor[0]
         self._cursor = redis_cursor[1].items().__iter__()
+
+
+class RedisDictKeys:
+    def __init__(self,
+                 d: RedinoDict) -> None:
+        self._iterator = RedisIterator(d)
+
+    def __next__(self) -> _K:
+        return self._iterator.__next__()[0]
+
+
+class RedisDictValues:
+    def __init__(self,
+                 d: RedinoDict) -> None:
+        self._iterator = RedisIterator(d)
+
+    def __next__(self) -> _K:
+        return self._iterator.__next__()[1]

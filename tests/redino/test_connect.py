@@ -1,7 +1,7 @@
 import unittest
 
-import redis
 import redino
+from redino import redis_instance
 
 
 class TestRedisReadWrite(unittest.TestCase):
@@ -24,8 +24,16 @@ class TestRedisReadWrite(unittest.TestCase):
             self.assertEqual("3", r.hget("a", "key").decode("utf-8"))
             self.assertEqual("3", r.hget("b", "key").decode("utf-8"))
 
-        set_values()
-        read_values()
+        @redino.connect
+        def clean_values():
+            redis_instance().execute_command("del", "a")
+            redis_instance().execute_command("del", "b")
+
+        try:
+            set_values()
+            read_values()
+        finally:
+            clean_values()
 
     def test_exception_rolls_back(self):
         @redino.connect

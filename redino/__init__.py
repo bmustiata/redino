@@ -74,3 +74,5 @@ def connect(f: Callable[..., T]) -> Callable[..., T]:
 
 from redino.redino_entity import Entity
 from redino.redino_list import RedinoList
+from redino.redino_dict import RedinoDict
+from redino.redino_set import RedinoSet

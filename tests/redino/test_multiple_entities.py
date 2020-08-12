@@ -12,6 +12,15 @@ class Folder(redino.Entity):
     folders: List['Folder']
     files: List['File']
 
+    def rd_delete(self) -> None:
+        if self.folders:
+            for folder in self.folders:
+                folder.rd_delete()
+
+            self.folders.rd_delete()  # FIXME: types should be also Redino
+
+        # we call the remove of the parent after all the other removes
+        super(Folder, self).rd_delete()
 
 class File(redino.Entity):
     parent: Folder
@@ -59,8 +68,15 @@ class TestMultipleEntities(unittest.TestCase):
             self.assertEqual("a", tests.folders[0].name)
             self.assertEqual("b", tests.folders[1].name)
 
-        create_data()
-        validate_data()
+        @redino.connect
+        def cleanup_data() -> None:
+            Folder(_id="test").rd_delete()
+
+        try:
+            create_data()
+            validate_data()
+        finally:
+            cleanup_data()
 
 
 if __name__ == '__main__':
