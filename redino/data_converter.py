@@ -15,10 +15,10 @@ class DataConverter:
         self._type = _type
 
     def from_data(self, data: Any) -> RedinoNative:
-        if self._type is str:
+        if self._type is str and isinstance(data, str):
             return data
 
-        if self._type is int:
+        if self._type is int and isinstance(data, int):
             return data
 
         if isinstance(data, redino.redino_entity.RedinoItem):
@@ -27,6 +27,18 @@ class DataConverter:
         if self._type.__origin__ is list and isinstance(data, list):
             result = redino.redino_list.RedinoList(_type=self._type)
             result.extend(data)
+
+            return result
+
+        if self._type.__origin__ is set and isinstance(data, set):
+            result = redino.redino_set.RedinoSet(_type=self._type)
+            result.update(data)
+
+            return result
+
+        if self._type.__origin__ is dict and isinstance(data, dict):
+            result = redino.redino_dict.RedinoDict(_type=self._type)
+            result.update(data)
 
             return result
 
@@ -47,6 +59,16 @@ class DataConverter:
 
         if self._type.__origin__ is list:
             return redino.redino_list.RedinoList(
+                _type=self._type,
+                _id=data.decode("utf-8"))
+
+        if self._type.__origin__ is set:
+            return redino.redino_set.RedinoSet(
+                _type=self._type,
+                _id=data.decode("utf-8"))
+
+        if self._type.__origin__ is dict:
+            return redino.redino_dict.RedinoDict(
                 _type=self._type,
                 _id=data.decode("utf-8"))
 
