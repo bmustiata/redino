@@ -1,11 +1,10 @@
 from typing import TypeVar, Iterable, Any, Optional, Iterator
 
 from redino._redis_instance import redis_instance
-from redino.data_converter import DataConverter
+from redino.data_converter import DataConverter, RedinoNative
 from redino.redino_item import RedinoItem
 
-_T = TypeVar("_T")
-_S = TypeVar("_S")
+_T = RedinoNative
 
 
 class RedinoList(RedinoItem):
@@ -22,7 +21,7 @@ class RedinoList(RedinoItem):
         # FIXME: use a converter cache for the types
         self._rd_converter = DataConverter(_type=_type.__args__[0])
 
-    def rd_persist(self: _S) -> _S:
+    def rd_persist(self: 'RedinoList') -> 'RedinoList':
         # there's nothing to persist when created
         return self
 
@@ -44,7 +43,7 @@ class RedinoList(RedinoItem):
             self._rd_converter.data_to_bytes(data)
         )
 
-    def __getitem__(self, index: int) -> _T:
+    def __getitem__(self: 'RedinoList', index: int) -> _T:
         data = redis_instance().execute_command(
             "lindex",
             self._rd_self_id,
@@ -56,7 +55,7 @@ class RedinoList(RedinoItem):
         self[i] = "__remove_me"
         self.remove("__remove_me")
 
-    def __iadd__(self: '', other: _T) -> _S:
+    def __iadd__(self: '', other: _T) -> 'RedinoList':
         self.append(other)
         return self
 
@@ -74,35 +73,35 @@ class RedinoList(RedinoItem):
         data = redis_instance().execute_command("lpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
-    def left_push(self: _S, item: _T) -> None:
+    def left_push(self: 'RedinoList', item: _T) -> None:
         data = self._rd_converter.data_to_bytes(item)
         redis_instance().execute_command("lpush", self._rd_self_id, data)
 
-    def right_push(self: _S, item: _T) -> None:
+    def right_push(self: 'RedinoList', item: _T) -> None:
         data = self._rd_converter.data_to_bytes(item)
         redis_instance().execute_command("rpush", self._rd_self_id, data)
 
-    def left_pop(self: _S) -> _T:
+    def left_pop(self: 'RedinoList') -> _T:
         data = redis_instance().execute_command("lpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
-    def right_pop(self: _S) -> _T:
+    def right_pop(self: 'RedinoList') -> _T:
         data = redis_instance().execute_command("rpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
-    def blocking_left_push(self: _S, item: _T) -> None:
+    def blocking_left_push(self: 'RedinoList', item: _T) -> None:
         data = self._rd_converter.data_to_bytes(item)
         redis_instance().execute_command("blpush", self._rd_self_id, data)
 
-    def blocking_right_push(self: _S, item: _T) -> None:
+    def blocking_right_push(self: 'RedinoList', item: _T) -> None:
         data = self._rd_converter.data_to_bytes(item)
         redis_instance().execute_command("brpush", self._rd_self_id, data)
 
-    def blocking_left_pop(self: _S) -> _T:
+    def blocking_left_pop(self: 'RedinoList') -> _T:
         data = redis_instance().execute_command("blpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
-    def blocking_right_pop(self: _S) -> _T:
+    def blocking_right_pop(self: 'RedinoList') -> _T:
         data = redis_instance().execute_command("brpop", self._rd_self_id)
         return self._rd_converter.from_bytes(data)
 
@@ -136,7 +135,7 @@ class RedinoList(RedinoItem):
 
 
 class ListIterator(Iterator[_T]):
-    def __init__(self: _S, l: RedinoList) -> None:
+    def __init__(self: 'RedinoList', l: RedinoList) -> None:
         self._list = l
         self._len = len(l)
         self._index = 0

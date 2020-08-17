@@ -5,7 +5,7 @@ import redino.redino_entity
 import redino.redino_entity
 import redino.redino_item
 
-RedisBytes = Union[bytes, int, str]
+RedisBytes = Union[bytes, int, str, None]
 RedinoNative = Union[redino.redino_item.RedinoItem, bytes, int, str, None]
 
 
@@ -25,22 +25,22 @@ class DataConverter:
             return data
 
         if self._type.__origin__ is list and isinstance(data, list):
-            result = redino.redino_list.RedinoList(_type=self._type)
-            result.extend(data)
+            list_result = redino.redino_list.RedinoList(_type=self._type)
+            list_result.extend(data)
 
-            return result
+            return list_result
 
         if self._type.__origin__ is set and isinstance(data, set):
-            result = redino.redino_set.RedinoSet(_type=self._type)
-            result.update(data)
+            set_result = redino.redino_set.RedinoSet(_type=self._type)
+            set_result.update(data)
 
-            return result
+            return set_result
 
         if self._type.__origin__ is dict and isinstance(data, dict):
-            result = redino.redino_dict.RedinoDict(_type=self._type)
-            result.update(data)
+            dict_result = redino.redino_dict.RedinoDict(_type=self._type)
+            dict_result.update(data)
 
-            return result
+            return dict_result
 
         raise Exception(f"Unsupported type: {self._type} for data {type(data)}")
 

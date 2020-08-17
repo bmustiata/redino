@@ -1,8 +1,8 @@
-from typing import List, Any, Optional, TypeVar
+from typing import List, Any, Optional, TypeVar, Dict
 
 from redino._redis_instance import redis_instance
 from redino.redino_item import RedinoItem, class_name
-from redino.data_converter import DataConverter
+from redino.data_converter import DataConverter, RedinoNative
 
 _S = TypeVar("_S")
 
@@ -20,9 +20,9 @@ class Entity(RedinoItem):
     def __init__(self,
                  _id: Optional[str] = None) -> None:
         super(Entity, self).__init__(_id=_id)
-        self._rd_cache = dict()
+        self._rd_cache: Dict[str, RedinoNative] = dict()
 
-    def rd_persist(self: _S) -> _S:
+    def rd_persist(self) -> 'Entity':
         redis_instance().hset(class_name(self), self._rd_self_id, "1")
         return self
 
