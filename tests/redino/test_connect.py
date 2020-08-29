@@ -2,12 +2,18 @@ import unittest
 
 import redino
 from redino import redis_instance
+from tests.redino.test_shared import prepare_test
 
 
 class TestRedisReadWrite(unittest.TestCase):
     """
     Test the model if it can create entries in redis
     """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     def test_regular_writing(self):
         @redino.connect
         @redino.transactional

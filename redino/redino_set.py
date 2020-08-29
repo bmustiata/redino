@@ -2,17 +2,15 @@ from typing import Any, Optional, TypeVar
 
 from redino import redis_instance
 from redino._redis_scan import RedisIterable, RedisScan
-from redino.data_converter import DataConverter
+from redino.data_converter import DataConverter, RedinoNative
 from redino.redino_item import RedinoItem
 
-_T = TypeVar("_T")
-_S = TypeVar("_S")
+_T = RedinoNative
+_S = TypeVar("_S", bound="RedinoSet")
 
 
 class RedinoSet(RedinoItem):
-    def __init__(self,
-                 _type: Any,
-                 _id: Optional[str] = None) -> None:
+    def __init__(self, _type: Any, _id: Optional[str] = None) -> None:
         super(RedinoSet, self).__init__(_id=_id)
 
         # FIXME: use a converter cache for the types
@@ -26,9 +24,7 @@ class RedinoSet(RedinoItem):
 
     def add(self: _S, item: _T):
         redis_instance().execute_command(
-            "sadd",
-            self._rd_self_id,
-            self._rd_converter.data_to_bytes(item)
+            "sadd", self._rd_self_id, self._rd_converter.data_to_bytes(item)
         )
 
     def clear(self):
@@ -42,14 +38,16 @@ class RedinoSet(RedinoItem):
         )
 
     def remove(self, item: _T):
-        result = int(redis_instance().execute_command(
-            "srem",
-            self._rd_self_id,
-            self._rd_converter.data_to_bytes(item),
-        ))
+        result = int(
+            redis_instance().execute_command(
+                "srem",
+                self._rd_self_id,
+                self._rd_converter.data_to_bytes(item),
+            )
+        )
 
         if not result:
-            raise ValueError(f"No such item {item} in set.")
+            raise ValueError(f"No such item {str(item)} in set.")
 
     def update(self, other_set):
         for item in other_set:
@@ -62,28 +60,27 @@ class RedinoSet(RedinoItem):
             self._rd_converter.data_to_bytes(item),
         )
 
-    def __iter__(self, *args, **kwargs): # real signature unknown
+    def __iter__(self, *args, **kwargs):  # real signature unknown
         """ Implement iter(self). """
         return RedisIterable(self, RedisSetIterator).__iter__()
 
-    def __len__(self): # real signature unknown
-        return int(redis_instance().execute_command(
-            "scard",
-            self._rd_self_id,
-        ))
+    def __len__(self):  # real signature unknown
+        return int(
+            redis_instance().execute_command(
+                "scard",
+                self._rd_self_id,
+            )
+        )
 
-    def __iadd__(self: '', other: _T) -> _S:
+    def __iadd__(self: _S, other: _T) -> _S:
         self.add(other)
         return self
 
 
 class RedisSetIterator:
-    def __init__(self,
-                 s: RedinoSet) -> None:
+    def __init__(self, s: RedinoSet) -> None:
         self._scan = RedisScan(s, "sscan")
         self._s = s
 
     def __next__(self) -> _T:
-        return self._s._rd_converter.from_bytes(
-            self._scan.__next__()
-        )
+        return self._s._rd_converter.from_bytes(self._scan.__next__())

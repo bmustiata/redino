@@ -2,9 +2,14 @@ import unittest
 from typing import List
 
 import redino
+from tests.redino.test_shared import prepare_test
 
 
 class TestList(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     @redino.connect
     def test_list_len(self):
         l = self.create_test_list()

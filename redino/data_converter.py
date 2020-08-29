@@ -10,8 +10,7 @@ RedinoNative = Union[redino.redino_item.RedinoItem, bytes, int, str, None]
 
 
 class DataConverter:
-    def __init__(self,
-                 _type: Any) -> None:
+    def __init__(self, _type: Any) -> None:
         self._type = _type
 
     def from_data(self, data: Any) -> RedinoNative:
@@ -49,28 +48,30 @@ class DataConverter:
             return None
 
         if self._type is str:
-            return data.decode('utf-8')
+            return data.decode("utf-8")
 
         if self._type is int:
             return int(data)
 
-        if inspect.isclass(self._type) and issubclass(self._type, redino.redino_entity.Entity):
+        if inspect.isclass(self._type) and issubclass(
+            self._type, redino.redino_entity.Entity
+        ):
             return self._type(_id=data.decode("utf-8"))
 
         if self._type.__origin__ is list:
             return redino.redino_list.RedinoList(
-                _type=self._type,
-                _id=data.decode("utf-8"))
+                _type=self._type, _id=data.decode("utf-8")
+            )
 
         if self._type.__origin__ is set:
             return redino.redino_set.RedinoSet(
-                _type=self._type,
-                _id=data.decode("utf-8"))
+                _type=self._type, _id=data.decode("utf-8")
+            )
 
         if self._type.__origin__ is dict:
             return redino.redino_dict.RedinoDict(
-                _type=self._type,
-                _id=data.decode("utf-8"))
+                _type=self._type, _id=data.decode("utf-8")
+            )
 
         raise Exception("Unsupported type: " % self._type)
 

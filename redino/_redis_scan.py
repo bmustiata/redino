@@ -5,9 +5,7 @@ from redino.redino_item import RedinoItem
 
 
 class RedisIterable:
-    def __init__(self,
-                 d: RedinoItem,
-                 iterator_class: Any) -> None:
+    def __init__(self, d: RedinoItem, iterator_class: Any) -> None:
         self._d = d
         self._iterator_class = iterator_class
 
@@ -16,9 +14,7 @@ class RedisIterable:
 
 
 class RedisScan:
-    def __init__(self,
-                 d: RedinoItem,
-                 command: str) -> None:
+    def __init__(self, d: RedinoItem, command: str) -> None:
         self._d = d
         self._current_index = -1
         self._command = command
@@ -54,4 +50,3 @@ class RedisScan:
             self._cursor = redis_cursor[1].items().__iter__()
         else:
             self._cursor = redis_cursor[1].__iter__()
-

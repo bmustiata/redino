@@ -5,20 +5,22 @@ import redino.redino_item
 from redino import redis_instance
 from redino._redis_scan import RedisScan, RedisIterable
 
-_S = TypeVar("_S")
-_K = TypeVar("_K")
-_V = TypeVar("_V")
+_S = TypeVar("_S", bound="RedinoDict")
+_K = redino.data_converter.RedinoNative
+_V = redino.data_converter.RedinoNative
 
 
 class RedinoDict(redino.redino_item.RedinoItem):
-    def __init__(self: _S,
-                 _type: Any,
-                 _id: Optional[str] = None) -> None:
+    def __init__(self: _S, _type: Any, _id: Optional[str] = None) -> None:
         super(RedinoDict, self).__init__(_id=_id)
 
         # FIXME: use a converter cache for the types
-        self._rd_converter_key = redino.data_converter.DataConverter(_type=_type.__args__[0])
-        self._rd_converter_value = redino.data_converter.DataConverter(_type=_type.__args__[1])
+        self._rd_converter_key = redino.data_converter.DataConverter(
+            _type=_type.__args__[0]
+        )
+        self._rd_converter_value = redino.data_converter.DataConverter(
+            _type=_type.__args__[1]
+        )
 
     def rd_persist(self: _S) -> _S:
         return self
@@ -70,9 +72,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
 
     def __contains__(self, key: _K) -> bool:
         return redis_instance().execute_command(
-            "hexists",
-            self._rd_self_id,
-            self._rd_converter_key.data_to_bytes(key)
+            "hexists", self._rd_self_id, self._rd_converter_key.data_to_bytes(key)
         )
 
     def __delitem__(self, key: _K):
@@ -95,10 +95,12 @@ class RedinoDict(redino.redino_item.RedinoItem):
         return self.keys()
 
     def __len__(self) -> int:
-        return int(redis_instance().execute_command(
-            "hlen",
-            self._rd_self_id,
-        ))
+        return int(
+            redis_instance().execute_command(
+                "hlen",
+                self._rd_self_id,
+            )
+        )
 
     def __setitem__(self, key: _K, value: _V):
         redis_instance().execute_command(
@@ -109,8 +111,7 @@ class RedinoDict(redino.redino_item.RedinoItem):
         )
 
 
-def convert_data(d: RedinoDict,
-                 data: Tuple[Any, Any]) -> Tuple[_K, _V]:
+def convert_data(d: RedinoDict, data: Tuple[Any, Any]) -> Tuple[_K, _V]:
     return (
         d._rd_converter_key.from_bytes(data[0]),
         d._rd_converter_value.from_bytes(data[1]),
@@ -118,20 +119,16 @@ def convert_data(d: RedinoDict,
 
 
 class RedisDictItems:
-    def __init__(self,
-                 d: RedinoDict) -> None:
+    def __init__(self, d: RedinoDict) -> None:
         self._scan = RedisScan(d, "hscan")
         self._d = d
 
     def __next__(self) -> Tuple[_K, _V]:
-        return convert_data(
-            self._d,
-            self._scan.__next__()
-        )
+        return convert_data(self._d, self._scan.__next__())
+
 
 class RedisDictKeys:
-    def __init__(self,
-                 d: RedinoDict) -> None:
+    def __init__(self, d: RedinoDict) -> None:
         self._iterator = RedisDictItems(d)
 
     def __next__(self) -> _K:
@@ -139,8 +136,7 @@ class RedisDictKeys:
 
 
 class RedisDictValues:
-    def __init__(self,
-                 d: RedinoDict) -> None:
+    def __init__(self, d: RedinoDict) -> None:
         self._iterator = RedisDictItems(d)
 
     def __next__(self) -> _K:

@@ -2,6 +2,7 @@ import unittest
 from typing import Dict, Set, List
 
 import redino
+from tests.redino.test_shared import prepare_test
 
 
 class Item(redino.Entity):
@@ -24,10 +25,16 @@ class TestModel(unittest.TestCase):
     """
     Tests if creating model works
     """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     def test_model(self):
         """
         Tests a model creation
         """
+
         @redino.connect
         def clear_values():
             for it in redino.Entity.fetch_all(Item):
@@ -67,5 +74,5 @@ class TestModel(unittest.TestCase):
             clear_values()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

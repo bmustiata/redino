@@ -1,12 +1,13 @@
-from typing import List, TypeVar, Callable, cast, Dict, Set
-import unittest
 import functools
+import unittest
+from typing import List, TypeVar, Callable, Dict, Set
 
+import redino
 from redino import RedinoSet
 from redino.data_converter import DataConverter
-import redino
+from tests.redino.test_shared import prepare_test
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def expect_fail(f: Callable[..., None]) -> Callable[..., None]:
@@ -29,6 +30,10 @@ class TestDataConverter(unittest.TestCase):
     """
     Tests if conversion handles correctly
     """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
 
     @redino.connect
     def test_nested_lists(self):
@@ -59,12 +64,14 @@ class TestDataConverter(unittest.TestCase):
         converter = DataConverter(t)
 
         # create a nested redino list of items
-        d = converter.from_data({
-            "x": {
-                "y": "abc",
-                "z": "123",
+        d = converter.from_data(
+            {
+                "x": {
+                    "y": "abc",
+                    "z": "123",
+                }
             }
-        })
+        )
 
         self.assertTrue(1, len(d))
         self.assertTrue(2, len(d["x"]))
@@ -102,5 +109,5 @@ class TestDataConverter(unittest.TestCase):
         assign_wrong_type_on_set_should_fail()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

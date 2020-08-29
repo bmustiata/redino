@@ -1,10 +1,10 @@
-from typing import List, Any, Optional, TypeVar, Dict
+from typing import List, Any, Optional, TypeVar, Dict, Type
 
 from redino._redis_instance import redis_instance
 from redino.redino_item import RedinoItem, class_name
 from redino.data_converter import DataConverter, RedinoNative
 
-_S = TypeVar("_S")
+T = TypeVar("T", bound="Entity")
 
 
 class Entity(RedinoItem):
@@ -17,12 +17,12 @@ class Entity(RedinoItem):
     and they return one of the `RedinoList`, `RedinoSet` or
     `RedinoDict` respectively.
     """
-    def __init__(self,
-                 _id: Optional[str] = None) -> None:
+
+    def __init__(self, _id: Optional[str] = None) -> None:
         super(Entity, self).__init__(_id=_id)
         self._rd_cache: Dict[str, RedinoNative] = dict()
 
-    def rd_persist(self) -> 'Entity':
+    def rd_persist(self: T) -> T:
         redis_instance().hset(class_name(self), self._rd_self_id, "1")
         return self
 
@@ -36,14 +36,16 @@ class Entity(RedinoItem):
         if key.startswith("_rd_"):
             return super(Entity, self).__getattribute__(key)
 
-        if key not in type(self).attr:
-            raise Exception(f"No attribute {key} in {self._rd_self_id}. "
-                            f"Only {type(self).attr} are known.")
+        if key not in type(self).attr:  # type: ignore
+            raise Exception(
+                f"No attribute {key} in {self._rd_self_id}. "  # type: ignore
+                f"Only {type(self).attr} are known."
+            )
 
         if key in self._rd_cache:
             return self._rd_cache[key]
 
-        definition = type(self).attr[key]
+        definition = type(self).attr[key]  # type: ignore
         # FIXME: cache converters
         converter = DataConverter(_type=definition)
         data = converter.from_bytes(redis_instance().hget(self._rd_self_id, key))
@@ -57,8 +59,10 @@ class Entity(RedinoItem):
             return super(Entity, self).__setattr__(key, value)
 
         if key not in type(self).attr:
-            raise Exception(f"No attribute {key} in {self._rd_self_id}. "
-                            f"Only {type(self).attr} are known.")
+            raise Exception(
+                f"No attribute {key} in {self._rd_self_id}. "
+                f"Only {type(self).attr} are known."
+            )
 
         definition = type(self).attr[key]
 
@@ -69,21 +73,30 @@ class Entity(RedinoItem):
         # guarantee usage from other objects.
         native = converter.from_data(value)
 
-        redis_instance().hset(
-            self._rd_self_id,
-            key,
-            converter.native_to_bytes(native))
+        redis_instance().hset(self._rd_self_id, key, converter.native_to_bytes(native))
 
         self._rd_cache[key] = native
 
     @staticmethod
-    def fetch_all(t: 'T') -> List['t']:
+    def fetch_all(t: Type[T]) -> List[T]:
         """
-        Fetches all the instances of the given type
+        Fetches all the instances of the given type.
         """
+        # FIXME: return an iterator
         # this gives us the IDs
         items = redis_instance().hgetall(class_name(t))
-        return [t(_id=id.decode('utf-8')) for id in items]
+        return [t(_id=id.decode("utf-8")) for id in items]
 
+    @staticmethod
+    def fetch_first(t: Type[T]) -> Optional[T]:
+        """
+        Fetches a single item of a given type.
+        """
+        for item in Entity.fetch_all(t):
+            return item
 
-T = TypeVar('T', bound=Entity)
+        return None
+
+    @staticmethod
+    def attributes(t: Type[T], attr: Dict[str, Any]) -> None:
+        t.attr = attr  # type: ignore

@@ -4,9 +4,14 @@ from typing import Dict
 
 import redino
 from redino.redino_dict import RedinoDict
+from tests.redino.test_shared import prepare_test
 
 
 class TestDictionary(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     @redino.connect
     def test_dict_items(self):
         d = TestDictionary.create_dictionary()
@@ -35,9 +40,7 @@ class TestDictionary(unittest.TestCase):
 
         @redino.connect
         def create_large_dict():
-            d = RedinoDict(
-                _id="testdictlarge",
-                _type=Dict[str, str]).rd_persist()
+            d = RedinoDict(_id="testdictlarge", _type=Dict[str, str]).rd_persist()
 
             for i in range(1000):
                 key = str(uuid.uuid4())
@@ -48,18 +51,14 @@ class TestDictionary(unittest.TestCase):
 
         @redino.connect
         def read_dictionary():
-            d = RedinoDict(
-                _id="testdictlarge",
-                _type=Dict[str, str])
+            d = RedinoDict(_id="testdictlarge", _type=Dict[str, str])
 
             for k, v in d.items():
                 control_dict[k] = v
 
         @redino.connect
         def delete_dict():
-            RedinoDict(
-                _id="testdictlarge",
-                _type=Dict[str, str]).rd_delete()
+            RedinoDict(_id="testdictlarge", _type=Dict[str, str]).rd_delete()
 
         try:
             create_large_dict()
@@ -84,10 +83,7 @@ class TestDictionary(unittest.TestCase):
         d = TestDictionary.create_dictionary()
 
         try:
-            self.assertEqual(
-                {"a", "b", "c"},
-                set(d.values())
-            )
+            self.assertEqual({"a", "b", "c"}, set(d.values()))
         finally:
             d.rd_delete()
 
@@ -96,10 +92,7 @@ class TestDictionary(unittest.TestCase):
         d = TestDictionary.create_dictionary()
 
         try:
-            self.assertEqual(
-                {"x", "y", "z"},
-                set(d.keys())
-            )
+            self.assertEqual({"x", "y", "z"}, set(d.keys()))
         finally:
             d.rd_delete()
 
@@ -110,10 +103,7 @@ class TestDictionary(unittest.TestCase):
         try:
             del d["y"]
 
-            self.assertEqual(
-                {"x", "z"},
-                set(d.keys())
-            )
+            self.assertEqual({"x", "z"}, set(d.keys()))
         finally:
             d.rd_delete()
 
@@ -126,16 +116,12 @@ class TestDictionary(unittest.TestCase):
         finally:
             d.rd_delete()
 
-
     @staticmethod
     def create_dictionary() -> RedinoDict:
-        d = RedinoDict(
-            _id="testdict",
-            _type=Dict[str, str]).rd_persist()
+        d = RedinoDict(_id="testdict", _type=Dict[str, str]).rd_persist()
 
         d["x"] = "a"
         d["y"] = "b"
         d["z"] = "c"
 
         return d
-

@@ -1,26 +1,27 @@
 import unittest
 from typing import Optional, List
 
-import redis
-
 import redino
+from redino import Entity
+from tests.redino.test_shared import prepare_test
 
 
 class Folder(redino.Entity):
-    parent: Optional['Folder']
+    parent: Optional["Folder"]
     name: str
-    folders: List['Folder']
-    files: List['File']
+    folders: List["Folder"]
+    files: List["File"]
 
     def rd_delete(self) -> None:
         if self.folders:
             for folder in self.folders:
                 folder.rd_delete()
 
-            self.folders.rd_delete()  # FIXME: types should be also Redino
+            self.folders.clear()
 
         # we call the remove of the parent after all the other removes
         super(Folder, self).rd_delete()
+
 
 class File(redino.Entity):
     parent: Folder
@@ -28,18 +29,25 @@ class File(redino.Entity):
     content: str
 
 
-Folder.attr = {
-    "parent": Folder,
-    "name": str,
-    "folders": List[Folder],
-    "files": List[File],
-}
+Entity.attributes(
+    Folder,
+    {
+        "parent": Folder,
+        "name": str,
+        "folders": List[Folder],
+        "files": List[File],
+    },
+)
 
-File.attr = {
-    "parent": Folder,
-    "name": str,
-    "content": str,
-}
+
+Entity.attributes(
+    File,
+    {
+        "parent": Folder,
+        "name": str,
+        "content": str,
+    },
+)
 
 
 def create_folder(name: str, _id: Optional[str] = None) -> Folder:
@@ -50,6 +58,10 @@ def create_folder(name: str, _id: Optional[str] = None) -> Folder:
 
 
 class TestMultipleEntities(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     def test_model(self):
         @redino.connect
         def create_data() -> None:
@@ -79,5 +91,5 @@ class TestMultipleEntities(unittest.TestCase):
             cleanup_data()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

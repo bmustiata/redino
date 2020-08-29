@@ -3,12 +3,18 @@ from typing import Set
 
 import redino
 from redino import RedinoSet
+from tests.redino.test_shared import prepare_test
 
 
 class TestModel(unittest.TestCase):
     """
     Tests if creating model works
     """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        prepare_test()
+
     @redino.connect
     def test_set(self):
         s = TestModel.create_test_set()
@@ -44,11 +50,9 @@ class TestModel(unittest.TestCase):
         finally:
             s.rd_delete()
 
-
     @staticmethod
     def create_test_set() -> RedinoSet:
-        s = RedinoSet(_type=Set[str],
-                      _id="testset").rd_persist()
+        s = RedinoSet(_type=Set[str], _id="testset").rd_persist()
 
         s.add("a")
         s.add("b")
