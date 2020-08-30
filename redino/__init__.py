@@ -2,6 +2,7 @@ import functools
 import logging
 from enum import Enum
 from typing import Callable, TypeVar, Optional
+import os
 
 import redis.client
 
@@ -24,7 +25,12 @@ def _redis_pool() -> redis.client.Redis:
     global _redis_pool_instance
 
     if not _redis_pool_instance:
-        _redis_pool_instance = redis.client.Redis()
+        _redis_pool_instance = redis.client.Redis(
+            host=os.environ.get("REDINO_HOST", "localhost"),
+            port=int(os.environ.get("REDINO_PORT", "6379")),
+            db=int(os.environ.get("REDINO_DB", "0")),
+            password=os.environ.get("REDINO_PASSWORD", None),
+        )
 
     return _redis_pool_instance
 
