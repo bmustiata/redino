@@ -34,6 +34,12 @@ redino.redino_entity.Entity.attributes(
 
 
 def _setup_connect(f: Callable[..., T]) -> Callable[..., T]:
+    """
+    Call an initial setup with a temporary client to the redis
+    server. The instance will be cleared after.
+    :param f:
+    :return:
+    """
     @functools.wraps(f)
     def wrapper(*args, **kw) -> T:
         with redino._redis_pool().client() as redis_client:  # type: ignore
