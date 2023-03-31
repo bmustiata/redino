@@ -14,7 +14,7 @@ setup(
     author="Bogdan Mustiata",
     author_email="bogdan.mustiata@gmail.com",
     license="BSD",
-    install_requires=["redis==3.5.3"],
+    install_requires=["redis==4.4.4"],
     packages=packages,
     package_data={
         "": ["*.txt", "*.rst"],
